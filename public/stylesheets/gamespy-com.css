@@ -12,7 +12,7 @@ section#voice-widget {
 {
 	height:30px;
 	width:199px;
-	background: url(images/gs-bar.png) center center no-repeat;
+	background: url(/images/gs-bar.png) center center no-repeat;
 }
 
 #voice-widget-body
@@ -61,7 +61,7 @@ section#voice-widget {
 	font-size:11px;
 	font-weight:bold;
 	float:right;
-  background: url(images/button.png) center center no-repeat;
+  background: url(/images/button.png) center center no-repeat;
 	padding-top:4px;
 	margin-top:8px;
 	margin-right:5px;
@@ -107,4 +107,24 @@ section#voice-widget {
 .gs-unselected
 {
 	background-color:#fff;
+}
+
+.gs-call-header
+{
+	font-size:14px;
+	font-weight:bold;
+  background: url(/images/bar.png) center center no-repeat;
+	width:197px;
+	height:29px;
+	color:#FFF;
+	text-align:center;
+}
+
+.gs-call-text
+{
+	position:absolute;
+	top:50%;
+	vertical-align:middle;
+	margin-top:-18px;
+	width:100%;
 }
