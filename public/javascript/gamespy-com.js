@@ -2,6 +2,8 @@ var keys = {};
 var widgetShown = false;
 var widgetTimeout = false;
 var firstTime = true;
+var host = "http://ec2-174-129-55-149.compute-1.amazonaws.com";
+
 function loadCSSFile(filename)
 {
 	var fileref=document.createElement("link");
@@ -15,7 +17,7 @@ function loadCSSFile(filename)
 $(function()
 {
 	$.fn.loadHtml = function(){
-		$.get('/html/gamespy-com.html', function(data)
+		$.get(host + '/html/gamespy-com.html', function(data)
 		{
 			$('body').append(data);
 		});
@@ -26,7 +28,7 @@ $(document).ready(function() {
 
 	
 	//load the CSS
-	loadCSSFile('/stylesheets/gamespy-com.css');
+	loadCSSFile(host + '/stylesheets/gamespy-com.css');
 	//load the HTML
 	$(document).loadHtml();
 
