@@ -1,3 +1,15 @@
+var Capability = require('TwilioCapability');
+var applicationSID = "AP3908a6ef66bf432998472952593d53e0";
+var accountSID = "ACafeeac727f8a41f6803036f5c66c0227";
+var authToken = "0fc218a05239b184fc2462988ebeefdb";
+
+// Generate a token
+var c  = new Capability(accountSID, authToken);
+c.allowClientOutgoing(applicationSID);
+c.clientName="Jeff Hohenstein";
+var token = c.generateToken();
+console.log(token);
+console.log(c);
 
 /**
  * Module dependencies.
@@ -30,8 +42,16 @@ app.configure('production', function(){
 
 app.get('/', function(req, res){
   res.render('index', {
-    title: 'GameSpy Web Voice Chat'
+    title: 'GameSpy Web Voice Chat',
+		token: token,
   });
+});
+
+app.get('/twilio', function(req,res){
+	console.log('Serving request for conference');
+	res.render('twilio',{
+		token: token
+	});
 });
 
 	

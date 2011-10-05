@@ -1,4 +1,11 @@
-script(src="http://static.twilio.com/libs/twiliojs/1.0/twilio.js")
-script(src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js")
-script(src="/javascript/client.js")
-h1 GameSpy Web Voice Chat
+!!! 5
+html
+	head
+		script(src="http://static.twilio.com/libs/twiliojs/1.0/twilio.js")
+		script(src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js")
+		script(src="/javascript/client.js")
+body
+	h1 GameSpy Web Voice Chat
+	#status Status
+	script
+		var token="#{token}";

@@ -1,5 +1,10 @@
   $(document).ready(function(){
-    Twilio.Device.setup("<?php echo $token->generateToken();?>");
+		//Immediately set the status
+		$('#status').text('Setting up');
+
+		// TODO the token is set by the template
+		console.log('Setting up Twilio with token ' + token);
+    Twilio.Device.setup(token);
 
     Twilio.Device.ready(function (device) { 
       $('#status').text('Ready to join conference');
