@@ -12,6 +12,17 @@ console.log(token);
 console.log(c);
 
 /**
+ * Generate GUIDs for conferences
+ */
+function generateGUID() {
+    var S4 = function() {
+       return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
+    };
+    return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
+}
+
+
+/**
  * Module dependencies.
  */
 
@@ -49,8 +60,16 @@ app.get('/', function(req, res){
 
 app.get('/twilio', function(req,res){
 	console.log('Serving request for conference');
+	console.log(req.param('CallSid'));
+	console.log(req.param('AccountSid'));
+	console.log(req.param('From'));
+	console.log(req.param('To'));
+	console.log(req.param('ForwardedFrom'));
+
+
 	res.render('twilio',{
-		token: token
+		token: token,
+		callSid: req.param('CallSid'),
 	});
 });
 

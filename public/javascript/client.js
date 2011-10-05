@@ -1,3 +1,7 @@
+// Register the variable that will hold the Twilio Connection
+var connection ;
+	
+
   $(document).ready(function(){
 		//Immediately set the status
 		$('#status').text('Setting up');
@@ -20,6 +24,7 @@
     });
                         
     Twilio.Device.connect(function (conn) { 
+			connection = conn;
       $('#status').text("Successfully joined conference");
     });
 
