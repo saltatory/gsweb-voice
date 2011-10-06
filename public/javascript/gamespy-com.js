@@ -221,21 +221,21 @@ $(document).ready(function() {
 			numCalls++;
 			$('#voice-widget-body').addCall(hackName);
 	});
+
+	/**
+	 * GameSpy Voice Communications!
+	 */
+	var GameSpy = {};
+	GameSpy.Voice = function() {}
+	GameSpy.Voice.prototype.addUser = function(name)
+	{
+	  $('#voice-widget-users').addUser(name);
+	}
+	
+	GameSpy.Voice.prototype.removeUser = function(name)
+	{
+	  $('#voice-widget-users').removeUser(name);
+	}
+	
 });
-
-
-/**
- * GameSpy Voice Communications!
- */
-var GameSpy = {};
-GameSpy.Voice = function() {}
-GameSpy.Voice.prototype.addUser = function(name)
-{
-	$('#voice-widget-users').addUser(name);
-}
-
-GameSpy.Voice.prototype.removeUser = function(name)
-{
-	$('#voice-widget-users').removeUser(name);
-}
 
