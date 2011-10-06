@@ -68,6 +68,9 @@ app.get('/', function(req, res){
   });
 });
 
+// Render a simplified list of conversations (GUIDs) and participants
+
+
 app.get('/token', function(req,res){
 	res.json({token: token});
 });
@@ -82,7 +85,6 @@ app.get('/twilio', function(req,res){
 
 	for(var g in GUIDs)
 	{
-		console.log(GUIDs[g]);
 		if(GUIDs[g]==guid)
 			found=true;
 	}
@@ -128,6 +130,14 @@ app.get('/guid', function(req,res) {
 });
 
 /**
+ * Return a list of conversations and the list of participants
+ */
+app.get('/list', function(req,res) {
+	console.log("List");
+	res.json(simplifyConversations());
+});
+
+/**
  * Poll the Twilio server for status on conversations once every 5 seconds.
  */
 function updateConversations()
@@ -155,7 +165,7 @@ function updateConversations()
  */
 function updateParticipants(conferenceSID)
 {
-	console.log("Updating participants list for conference" + conferenceSID);
+	console.log("Updating participants list for conference " + conferenceSID);
 
 	var url = "https://" +
 		"api.twilio.com/2010-04-01/Accounts/" +
@@ -169,7 +179,7 @@ function updateParticipants(conferenceSID)
 		username: accountSID,
 		password: authToken,
 	})
-	.on('complete',onUpdateParticipants(data)
+	.on('complete',onUpdateParticipants)
 	.on('error',function(error){console.log(error)})
 	;
 
@@ -186,12 +196,11 @@ function onUpdateConversations(data)
 	// Overwrite the conversations object
 	Conversations = [] ;
 
-	console.log(data);
 	for(var c in data.conferences)
 	{
 		// Only look at in-progress conferences
-		//if(data.conferences[c].status=='in-progress')
-		if(true)
+		if(data.conferences[c].status=='in-progress')
+		//if(true)
 		{
 			Conversations.push(
 				{
@@ -221,14 +230,48 @@ function onUpdateConversations(data)
  * Called when Twilio responds with a participant list
  * for a conversation
  */
-function onUpdateParticipants(data,conferenceSID)
+function onUpdateParticipants(data)
 {
-	// Find the matching conversation and set the list
-	console.log(data);
+	var parts = data.uri.split('/');
+	var sid = parts[5];
+
+	// Look through the conversations and update the participant list
+	for( var c in Conversations )
+	{
+		if( Conversations[c].conference.sid==sid )
+		{
+			Conversations[c].Participants=data;
+		}
+	}	
+}
+
+/**
+ * Generate a simplified list of conversations
+ */
+function simplifyConversations()
+{
+	var simplified = [] ;
+	for( var c in Conversations )
+	{
+		var conv ={};
+		conv.guid = Conversations[c].guid ;
+
+		var participants = Conversations[c].Participants.participants ;
+
+		conv.Participants = [];
+
+		for( var p in participants )
+		{
+			var participant = participants[p];
+			conv.Participants.push(participant.call_sid);
+		}
+		simplified.push(conv);
+	}
+	return simplified ;
 }
 
 
-setTimeout(updateConversations,10);
+setInterval(updateConversations,10000);
 
 app.listen(80);
 console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);

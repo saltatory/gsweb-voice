@@ -12,8 +12,8 @@ var connection ;
 
     Twilio.Device.ready(function (device) { 
       $('#status').text('Ready to join conference');
-      Twilio.Device.connect();
-    });
+      Twilio.Device.connect({GUID:"de90c5d4-e180-ed18-3e0c-b8ab11231f87"}); 
+		});
                         
     Twilio.Device.offline(function (device) { 
       $('#status').text('Connection offline');
