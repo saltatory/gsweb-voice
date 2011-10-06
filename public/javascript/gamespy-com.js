@@ -2,6 +2,9 @@ var keys = {};
 var widgetShown = false;
 var widgetTimeout = false;
 var firstTime = true;
+
+var connection;
+
 //var host = "";
 var host = "http://ec2-174-129-55-249.compute-1.amazonaws.com";
 function loadCSSFile(filename)
@@ -10,6 +13,15 @@ function loadCSSFile(filename)
 	fileref.setAttribute("rel", "stylesheet");
 	fileref.setAttribute("type", "text/css");
 	fileref.setAttribute("href", filename);
+	if (typeof fileref!="undefined")
+		document.getElementsByTagName("head")[0].appendChild(fileref);
+}
+
+function loadJSFile(filename)
+{
+	var fileref=document.createElement('script');
+	fileref.setAttribute("type","text/javascript");
+	fileref.setAttribute("src", filename);
 	if (typeof fileref!="undefined")
 		document.getElementsByTagName("head")[0].appendChild(fileref);
 }
@@ -32,6 +44,21 @@ $(document).ready(function() {
 	//load the HTML
 	$(document).loadHtml();
 
+
+		//initialize Twilio
+		Twilio.Device.setup(token);
+		Twilio.Device.ready(function(device)
+		{
+		});
+		Twilio.Device.error(function (error)
+		{
+			$('#talk-button').text("Error");
+		}
+		Twilio.Device.offline(function(conn)
+		{
+			$('#talk-button').text("Offline");
+		}
+
 	//logic to show/hide the widget when pressing Ctrl+V
 	$(document).keydown(function(event){
 		keys[event.which] = true;
@@ -50,7 +77,6 @@ $(document).ready(function() {
 					$("#voice-widget-body").slideDown();
 					widgetShown = true;
 
-					//HACK
 					if(firstTime)
 					{
 						//remove these when you get the server reporting
@@ -166,6 +192,19 @@ $(document).ready(function() {
 
 	$('#talk-button').live('click', function()
 	{
+		jQuery.get('http://ec2-174-129-55-249.compute-1.amazonaws.com/guid',
+			function(data)
+			{
+				var guid = data.responseText.match(/".*":".*"/);
+				guid = guid[0].replace(/".*":"/, '').replace(/"/, '');
+
+				
+				Twilio.Device.connect({GUID:guid});
+			});
+	});
+
+	Twilio.Device.connect(function (conn) {
+			connection = conn;
 			$('#talk-button').slideUp();
 			$('#voice-widget-users').removeUser(hackName);
 			numCalls++;
