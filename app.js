@@ -61,6 +61,13 @@ app.configure('production', function(){
 
 // Routes
 
+// global controller
+app.all('/*',function(req,res,next){
+    res.header('Access-Control-Allow-Origin' , '*' );
+    res.header("Access-Control-Allow-Headers", "X-Requested-With");
+    next(); // http://expressjs.com/guide.html#passing-route control
+});
+
 app.get('/', function(req, res){
   res.render('index', {
     title: 'GameSpy Web Voice Chat',

@@ -3,7 +3,7 @@ var widgetShown = false;
 var widgetTimeout = false;
 var firstTime = true;
 //var host = "";
-var host = "http://ec2-174-129-55-149.compute-1.amazonaws.com";
+var host = "http://ec2-174-129-55-249.compute-1.amazonaws.com";
 function loadCSSFile(filename)
 {
 	var fileref=document.createElement("link");
@@ -33,7 +33,7 @@ $(document).ready(function() {
 	$(document).loadHtml();
 
 	//logic to show/hide the widget when pressing Ctrl+V
-	$(document).keydown(function(){
+	$(document).keydown(function(event){
 		keys[event.which] = true;
 
 		if(keys[17] && keys[86])
@@ -65,7 +65,7 @@ $(document).ready(function() {
 		}
 	});
 
-	$(document).keyup(function(){
+	$(document).keyup(function(event){
 		keys[event.which] = false;
 		if(!keys[86])
 		{
