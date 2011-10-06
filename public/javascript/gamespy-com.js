@@ -192,7 +192,15 @@ $(document).ready(function() {
 
 	$('#talk-button').live('click', function()
 	{
-		Twilio.Device.connect();
+		jQuery.get('http://ec2-174-129-55-249.compute-1.amazonaws.com/guid',
+			function(data)
+			{
+				var guid = data.responseText.match(/".*":".*"/);
+				guid = guid[0].replace(/".*":"/, '').replace(/"/, '');
+
+				
+				Twilio.Device.connect({GUID:guid});
+			});
 	});
 
 	Twilio.Device.connect(function (conn) {
