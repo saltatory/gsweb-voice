@@ -44,7 +44,18 @@ $(document).ready(function() {
 	//load the HTML
 	$(document).loadHtml();
 
-
+	var token;
+	var getToken = function()
+	{
+		jQuery.get('http://ec2-174-129-55-249.compute-1.amazonaws.com/token',
+			function(data)
+			{
+				alert(data.responseText);
+				token = data.responseText.match(/".*":".*"/);
+				token = token[0].replace(/".*":"/, '').replace(/"/, '');
+			});
+	}
+		getToken();
 		//initialize Twilio
 		Twilio.Device.setup(token);
 		Twilio.Device.ready(function(device)
@@ -53,11 +64,11 @@ $(document).ready(function() {
 		Twilio.Device.error(function (error)
 		{
 			$('#talk-button').text("Error");
-		}
+		});
 		Twilio.Device.offline(function(conn)
 		{
 			$('#talk-button').text("Offline");
-		}
+		});
 
 	//logic to show/hide the widget when pressing Ctrl+V
 	$(document).keydown(function(event){
