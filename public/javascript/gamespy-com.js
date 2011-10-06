@@ -2,8 +2,8 @@ var keys = {};
 var widgetShown = false;
 var widgetTimeout = false;
 var firstTime = true;
+//var host = "";
 var host = "http://ec2-174-129-55-149.compute-1.amazonaws.com";
-
 function loadCSSFile(filename)
 {
 	var fileref=document.createElement("link");
@@ -136,16 +136,39 @@ $(document).ready(function() {
 			{
 				if($(this).attr('id') == 'un-' + userName)
 				{
-					$(this).slideUp();
 					$(this).remove();
 				}
 			});
 		}
 	})(jQuery);
 			
+	var numCalls = 0;
+	
+	(function($) {
 
-	$('#talk-button').click(function()
+		$.fn.addCall = function(userName) {
+			var newCallDiv = '<div id="gs-call-' + numCalls +
+			'" class="gs-call"><div class="gs-call-header" ' + 
+			'id="gs-call-header-' + numCalls + '">'+
+			'<div class="gs-call-text">Call ' +
+			numCalls + '</div></div><div id="call-' + numCalls + '-users"' +
+			'></div>' +
+			'<div id="leave-button-container" class="gs-button-container">' +
+			'<div id="leave-button" class="gs-button">Leave</div></div>' +
+			'</div>';
+
+			$(this).append(newCallDiv);
+			$('#call-' + numCalls + '-users').addUser(userName);
+		}
+	})(jQuery);
+
+	var hackName = 'Sean';
+
+	$('#talk-button').live('click', function()
 	{
-			$('#voice-widget-users').removeUser('Sean');
+			$('#talk-button').slideUp();
+			$('#voice-widget-users').removeUser(hackName);
+			numCalls++;
+			$('#voice-widget-body').addCall(hackName);
 	});
 });
