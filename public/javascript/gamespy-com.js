@@ -91,7 +91,7 @@ $(document).ready(function() {
 		}
 	});
 
-	$(document).keyup(function(){
+	$(document).keyup(function(event){
 		keys[event.which] = false;
 		if(!keys[86])
 		{
