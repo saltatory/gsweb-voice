@@ -118,6 +118,7 @@ section#voice-widget {
 	height:29px;
 	color:#FFF;
 	text-align:center;
+	position:relative;
 }
 
 .gs-call-text

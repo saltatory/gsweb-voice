@@ -2,8 +2,105 @@ var keys = {};
 var widgetShown = false;
 var widgetTimeout = false;
 var firstTime = true;
+var numCalls = 0;
 
+//stores guid of my current call
+var myCall;
+
+var userList = new Array();
+var thisUser = 'Sean';
 var connection;
+var chatroomData;
+var chatrooms = new Array();
+var roomUserList = new Array();
+
+var joinCall = function(guid)
+{
+	myCall = guid;
+	Twilio.Device.connect({GUID:guid, name:thisUser});
+	$('#button-container-' + guid).empty();
+	$('#button-container-' + guid).append(getLeaveButton());
+}
+
+var getLeaveButton = function()
+{
+	return '<div id="leave-button" class="gs-button">Leave</div>';
+}
+
+var getJoinButton = function(guid)
+{
+	return '<div id="join-' + guid + '-button" onClick="joinCall(\'' + guid + 
+					'\');" class="gs-button">Join</div>';
+}
+
+var getChatters = function()
+{
+	jQuery.getJSON('http://ec2-174-129-55-249.compute-1.amazonaws.com/list',
+		function(data)
+		{
+			if(!data)
+			{
+				return;
+			}
+
+			chatroomData = data;
+			var newGuids = new Array();
+			chatroomData.forEach(function(room)
+			{
+				newGuids.push(room.guid);
+			});
+			newGuids.sort();
+			chatrooms.sort();
+
+			//if there is a new chatroom, add it.
+			var i = 0;
+			var j = 0;
+			while (i < newGuids.length && j < chatrooms.length)
+			{
+				if(newGuids[i] == chatrooms[j])
+				{
+					i++;
+					j++;
+					continue;
+				}
+				//chatroom j no longer exists, remove it
+				else if(newGuids[i] > chatrooms[j])
+				{
+					removeRoom(chatrooms[j]);
+					j++;
+				}
+				//newGuids i is new! Add it!
+				else if(newGuids[i] < chatrooms[j])
+				{
+					$('#voice-widget-body').addCall(newGuids[i]);
+					i++;
+				}
+			}
+			
+			//make new rooms until we're done
+			while(i < newGuids.length)
+			{
+				$('#voice-widget-body').addCall(newGuids[i]);
+				i++;
+			}
+			//remove old rooms until we're done
+			while(j < chatrooms.length)
+			{
+				removeRoom(chatrooms[j]);
+				j++;
+			}
+			chatrooms = newGuids;
+			
+
+		});
+}//getChatters()
+
+var removeRoom = function(guid)
+{
+	$('#gs-call-' + guid).remove();
+}
+
+window.setInterval(getChatters, 5000);
 
 //var host = "";
 var host = "http://ec2-174-129-55-249.compute-1.amazonaws.com";
@@ -47,17 +144,14 @@ $(document).ready(function() {
 	var token;
 	var getToken = function()
 	{
-		jQuery.get('http://ec2-174-129-55-249.compute-1.amazonaws.com/token',
+		jQuery.getJSON('http://ec2-174-129-55-249.compute-1.amazonaws.com/token',
 			function(data)
 			{
-				alert(data.responseText);
-				token = data.responseText.match(/".*":".*"/);
-				token = token[0].replace(/".*":"/, '').replace(/"/, '');
+				Twilio.Device.setup(data.token);
 			});
 	}
 		getToken();
 		//initialize Twilio
-		Twilio.Device.setup(token);
 		Twilio.Device.ready(function(device)
 		{
 		});
@@ -92,8 +186,6 @@ $(document).ready(function() {
 					{
 						//remove these when you get the server reporting
 						$('#voice-widget-users').addUser('Sean');
-						$('#voice-widget-users').addUser('AzHP');
-						$('#voice-widget-users').addUser('BlueBerryP13');
 						firstTime = false;
 					}
 				}
@@ -134,8 +226,70 @@ $(document).ready(function() {
 		}
 	})(jQuery);
 			
-	var userList = new Array();
-	var thisUser = 'Sean';
+
+	(function($) {
+
+		$.fn.addCall = function(guid) {
+			var newCallDiv = '<div id="gs-call-' + guid +
+			'" class="gs-call"><div class="gs-call-header" ' + 
+			'id="gs-call-header-' + guid + '">'+
+			'<div class="gs-call-text">Call ' +
+			guid + '</div></div><div id="call-' + guid + '-users"' +
+			'></div>';
+
+			newCallDiv += '<div class="gs-button-container" id="button-container-' + guid + '">';
+
+			if(guid == myCall)
+			{
+				newCallDiv += getLeaveButton();
+			}
+			else
+			{	
+				newCallDiv += getJoinButton(guid); 
+			}
+			newCallDiv += '</div></div>';
+
+			$(this).append(newCallDiv);
+		}
+	})(jQuery);
+
+
+	$('#talk-button').live('click', function()
+	{
+		jQuery.getJSON('http://ec2-174-129-55-249.compute-1.amazonaws.com/guid',
+			function(data)
+			{	
+				myCall = data.GUID;
+				$('#voice-widget-body').addCall(myCall);
+				Twilio.Device.connect({GUID:data.GUID, name:thisUser});
+				chatrooms.push(myCall);
+			});
+	});
+
+	$('#leave-button').live('click', function()
+	{
+		Twilio.Device.disconnectAll();
+		$('#button-container-' + myCall).empty();
+		$('#button-container-' + myCall).append(getJoinButton(myCall));
+		$('#call-' + myCall + '-users').removeUser(thisUser);
+		$('#voice-widget-users').addUser(thisUser);
+	});
+
+	Twilio.Device.disconnect(function (conn)
+	{
+		
+	});
+
+	Twilio.Device.connect(function (conn) {
+			connection = conn;
+//		$('#talk-button').slideUp();
+			$('#voice-widget-users').removeUser(thisUser);
+			$('#call-' + myCall + '-users').addUser(thisUser);
+	});
+
+	
+});
+//end document ready
 
 	(function($) {
 
@@ -179,63 +333,33 @@ $(document).ready(function() {
 		}
 	})(jQuery);
 			
-	var numCalls = 0;
 	
-	(function($) {
+/**
+ * GameSpy Voice Communications!
+ */
+var GameSpy = {};
+GameSpy.Voice = function() {}
+GameSpy.Voice.prototype.addUser = function(name)
+{
+  $('#voice-widget-users').addUser(name);
+	userList.push(name);
+}
 
-		$.fn.addCall = function(userName) {
-			var newCallDiv = '<div id="gs-call-' + numCalls +
-			'" class="gs-call"><div class="gs-call-header" ' + 
-			'id="gs-call-header-' + numCalls + '">'+
-			'<div class="gs-call-text">Call ' +
-			numCalls + '</div></div><div id="call-' + numCalls + '-users"' +
-			'></div>' +
-			'<div id="leave-button-container" class="gs-button-container">' +
-			'<div id="leave-button" class="gs-button">Leave</div></div>' +
-			'</div>';
-
-			$(this).append(newCallDiv);
-			$('#call-' + numCalls + '-users').addUser(userName);
-		}
-	})(jQuery);
-
-	var hackName = 'Sean';
-
-	$('#talk-button').live('click', function()
+GameSpy.Voice.prototype.setThisUser = function(name)
+{
+	this.addUser(name);
+	thisUser = name;
+}
+	
+GameSpy.Voice.prototype.removeUser = function(name)
+{
+	//doesn't work if user is in a call...
+  $('#voice-widget-users').removeUser(name);
+	userList.remove(name);
+	var i = userList.indexOf(name);
+	if( i != -1)
 	{
-		jQuery.get('http://ec2-174-129-55-249.compute-1.amazonaws.com/guid',
-			function(data)
-			{
-				var guid = data.responseText.match(/".*":".*"/);
-				guid = guid[0].replace(/".*":"/, '').replace(/"/, '');
-
-				
-				Twilio.Device.connect({GUID:guid});
-			});
-	});
-
-	Twilio.Device.connect(function (conn) {
-			connection = conn;
-			$('#talk-button').slideUp();
-			$('#voice-widget-users').removeUser(hackName);
-			numCalls++;
-			$('#voice-widget-body').addCall(hackName);
-	});
-
-	/**
-	 * GameSpy Voice Communications!
-	 */
-	var GameSpy = {};
-	GameSpy.Voice = function() {}
-	GameSpy.Voice.prototype.addUser = function(name)
-	{
-	  $('#voice-widget-users').addUser(name);
+		userList.splice(i, 1);
 	}
-	
-	GameSpy.Voice.prototype.removeUser = function(name)
-	{
-	  $('#voice-widget-users').removeUser(name);
-	}
-	
-});
+}	
 

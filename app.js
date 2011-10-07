@@ -9,17 +9,10 @@ var authToken = "0fc218a05239b184fc2462988ebeefdb";
 
 // Conversations
 var Conversations = [];
+var Calls = [];
 
 // GUIDs
 var GUIDs = [] ;
-
-// Generate a token
-var c  = new Capability(accountSID, authToken);
-c.allowClientOutgoing(applicationSID);
-c.clientName="Jeff Hohenstein";
-var token = c.generateToken();
-console.log(token);
-console.log(c);
 
 /**
  * Generate GUIDs for conferences
@@ -86,7 +79,11 @@ app.get('/twilio', function(req,res){
 	console.log('Serving request for conference');
 
 	var guid = req.param('GUID');
+	var name = req.param('name');
+	var sid = req.param('CallSid');
 	console.log("GUID\t" + guid);
+	console.log("Name\t" + name);
+	console.log("SID\t" + sid);
 
 	var found = false;
 
@@ -100,9 +97,10 @@ app.get('/twilio', function(req,res){
 	{
 		res.render('twilio',{
 			token: token,
-			callSid: req.param('CallSid'),
+			callSid: sid,
 			GUID: guid,
 		});
+		registerCall(sid,name);
 	}
 	else {
 		res.render('GUIDNotFound',{
@@ -110,6 +108,8 @@ app.get('/twilio', function(req,res){
 			GUID: guid,
 		});
 	}
+	// Trigger an update of the conversations
+	updateConversations();
 });
 
 /**
@@ -140,9 +140,31 @@ app.get('/guid', function(req,res) {
  * Return a list of conversations and the list of participants
  */
 app.get('/list', function(req,res) {
-	console.log("List");
+//	console.log("Conversation List");
+//	console.log(Conversations);
 	res.json(simplifyConversations());
 });
+
+/**
+ * When Twilio initiates a call, we want to track
+ * the SID of the call and the name of the caller.
+ */
+function registerCall(sid,name)
+{
+	for( var c in Calls )
+	{
+		if( Calls[c].name == name)
+		{
+			//Update the existing call with the new sid
+			Calls[c].sid = sid;
+			return;
+		}
+	}
+	Calls.push({sid: sid, name: name});
+
+	console.log("Calls");
+	console.log(Calls);
+}
 
 /**
  * Poll the Twilio server for status on conversations once every 5 seconds.
@@ -217,7 +239,7 @@ function onUpdateConversations(data)
 			);
 		}
 		else{
-			console.log( 'Miss\t' + data.conferences[c].friendly_name ) ;
+//			console.log( 'Miss\t' + data.conferences[c].friendly_name ) ;
 		}
 	}
 
@@ -228,9 +250,11 @@ function onUpdateConversations(data)
 	}
 		
 
+/*
 	console.log("============================================================");
 	console.log(Conversations);
 	console.log("============================================================");
+*/
 }
 
 /**
@@ -260,25 +284,54 @@ function simplifyConversations()
 	var simplified = [] ;
 	for( var c in Conversations )
 	{
-		var conv ={};
+		var conv = {};
 		conv.guid = Conversations[c].guid ;
 
-		var participants = Conversations[c].Participants.participants ;
-
-		conv.Participants = [];
-
-		for( var p in participants )
+		if(Conversations[c].Participants.participants )
 		{
-			var participant = participants[p];
-			conv.Participants.push(participant.call_sid);
+			var participants = Conversations[c].Participants.participants ;
+	
+			conv.Participants = [];
+	
+			for( var p in participants )
+			{
+				var participant = participants[p];
+				var sid = participant.call_sid;
+				var simplifiedParticipant = {sid: sid, name: ""};
+				// Attempt to get the name for the sid
+				for(var call in Calls)
+				{
+					if(Calls[call].sid==sid)
+					{
+						simplifiedParticipant.name = Calls[call].name;
+					}
+				}
+				conv.Participants.push(simplifiedParticipant);
+			}
 		}
 		simplified.push(conv);
 	}
 	return simplified ;
 }
 
+/**
+ * Generate a new Twilio token
+ */
+function generateToken()
+{
+	var c  = new Capability(accountSID, authToken);
+	c.allowClientOutgoing(applicationSID);
+	c.clientName="Jeff Hohenstein";
+	token = c.generateToken();
+	return token;
+}
 
+var token ;
+generateToken();
+console.log(token);
 setInterval(updateConversations,10000);
+setInterval(generateToken,2000000);
+
 
 app.listen(80);
 console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);
