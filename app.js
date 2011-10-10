@@ -287,7 +287,7 @@ function simplifyConversations()
 		var conv = {};
 		conv.guid = Conversations[c].guid ;
 
-		if(Conversations[c].Participants.participants )
+		if( Conversations[c].Participants && Conversations[c].Participants.participants )
 		{
 			var participants = Conversations[c].Participants.participants ;
 	
@@ -329,7 +329,7 @@ function generateToken()
 var token ;
 generateToken();
 console.log(token);
-setInterval(updateConversations,10000);
+setInterval(updateConversations,1000);
 setInterval(generateToken,2000000);
 
 

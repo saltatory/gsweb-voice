@@ -14,6 +14,7 @@ var chatroomData;
 var chatrooms = new Array();
 var roomUserList = new Array();
 
+
 var sortNames = function(a,b)
 {
 	if(a.name > b.name) 
@@ -38,7 +39,6 @@ var makeCall = function(guid)
 		function(data)
 		{
 			Twilio.Device.setup(data.token);
-			//NEW CALL
 			if(!guid)
 			{
 				jQuery.getJSON('http://ec2-174-129-55-249.compute-1.amazonaws.com/guid',
@@ -47,10 +47,8 @@ var makeCall = function(guid)
 					myCall = data.GUID;
 					Twilio.Device.connect({GUID:data.GUID, name:thisUser});
 					chatrooms.push(myCall);
-					$('#voice-widget-body').addCall(myCall);
 				});
 			}
-			//JOINING EXISTING CALL
 			else
 			{
 					myCall = guid;
@@ -80,7 +78,6 @@ var removeUserFromCall = function(guid, name)
 	$('#call-' + guid + '-users').removeUser(name);
 }
 
-var roomClosed = false;
 
 var getChatters = function()
 {
@@ -117,7 +114,6 @@ var getChatters = function()
 				{
 					roomUserList[chatrooms[j]] = null;
 					removeRoom(chatrooms[j]);
-					roomClosed = true;
 					j++;
 				}
 				//newGuids i is new! Add it!
@@ -139,7 +135,6 @@ var getChatters = function()
 			{
 				roomUserList[chatrooms[j]] = null;
 				removeRoom(chatrooms[j]);
-				roomClosed = true;
 				j++;
 			}
 			chatrooms = newGuids;
@@ -219,7 +214,7 @@ var getChatters = function()
 				while(j < oldUsers.length)
 				{
 					//alert('5: old user ' + oldUsers[j].name);
-					removeUserFromCall(room, oldUsers[j].name);
+					removeUserFromCall(room, oldUsers[j]);
 					j++;
 				}
 				roomUserList[room] = newRoomUserList[room];
@@ -229,7 +224,7 @@ var getChatters = function()
 			//we have a list of users who ARE in chats, and we have to
 			//get the list of users in the game who are NOT in chats
 		
-		if(newUserList.length == 0 && !roomClosed)
+		if(newUserList.length == 0)
 			return;
 
 			var notChatting = new Array();
@@ -250,7 +245,7 @@ var getChatters = function()
 			{
 				$('#voice-widget-users').addUser(user);
 			});
-			roomClosed = false;
+
 		});//getJSON()
 }//getChatters()
 
@@ -416,6 +411,7 @@ $(document).ready(function() {
 	$('#talk-button').live('click', function()
 	{
 		makeCall();
+		$('#voice-widget-body').addCall(myCall);
 	});
 
 	$('#voice-widget-header').live('click', function()
@@ -430,7 +426,6 @@ $(document).ready(function() {
 		$('#button-container-' + myCall).append(getJoinButton(myCall));
 		removeUserFromCall(myCall, thisUser);
 		$('#voice-widget-users').addUser(thisUser);
-		$('#talk-button').slideDown();
 
 	});
 
@@ -484,7 +479,7 @@ $(document).ready(function() {
 
 		$.fn.removeUser = function(userName) {
 			var array = new Array();
-			//alert('remove user: ' + userName);
+
 			$(this).children().each(function()
 			{
 				if($(this).attr('id') == 'un-' + userName)
@@ -517,7 +512,7 @@ GameSpy.Voice.prototype.removeUser = function(name)
 {
 	//doesn't work if user is in a call...
   $('#voice-widget-users').removeUser(name);
-	//userList.remove(name);
+	userList.remove(name);
 	var i = userList.indexOf(name);
 	if( i != -1)
 	{

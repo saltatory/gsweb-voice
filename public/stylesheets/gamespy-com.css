@@ -15,6 +15,11 @@ section#voice-widget {
 	background: url(/images/gs-bar.png) center center no-repeat;
 }
 
+#voice-widget-header:hover
+{
+	cursor:pointer;
+}
+
 #voice-widget-body
 {
 	top:15px;
@@ -126,6 +131,6 @@ section#voice-widget {
 	position:absolute;
 	top:50%;
 	vertical-align:middle;
-	margin-top:-18px;
+	margin-top:-9px;
 	width:100%;
 }

@@ -14,6 +14,7 @@ var chatroomData;
 var chatrooms = new Array();
 var roomUserList = new Array();
 
+
 var sortNames = function(a,b)
 {
 	if(a.name > b.name) 
@@ -27,37 +28,11 @@ var sortNames = function(a,b)
 var joinCall = function(guid)
 {
 	myCall = guid;
-	makeCall(guid);
+	Twilio.Device.connect({GUID:guid, name:thisUser});
 	$('#button-container-' + guid).empty();
 	$('#button-container-' + guid).append(getLeaveButton());
 }
 
-var makeCall = function(guid)
-{
-	jQuery.getJSON('http://ec2-174-129-55-249.compute-1.amazonaws.com/token',
-		function(data)
-		{
-			Twilio.Device.setup(data.token);
-			//NEW CALL
-			if(!guid)
-			{
-				jQuery.getJSON('http://ec2-174-129-55-249.compute-1.amazonaws.com/guid',
-				function(data)
-				{	
-					myCall = data.GUID;
-					Twilio.Device.connect({GUID:data.GUID, name:thisUser});
-					chatrooms.push(myCall);
-					$('#voice-widget-body').addCall(myCall);
-				});
-			}
-			//JOINING EXISTING CALL
-			else
-			{
-					myCall = guid;
-					Twilio.Device.connect({GUID:guid, name:thisUser});
-			}
-		});
-}
 var getLeaveButton = function()
 {
 	return '<div id="leave-button" class="gs-button">Leave</div>';
@@ -77,10 +52,9 @@ var addUserToCall = function(guid, name)
 
 var removeUserFromCall = function(guid, name)
 {
-	$('#call-' + guid + '-users').removeUser(name);
+	$('#call-' + guid + 'users').removeUser(name);
 }
 
-var roomClosed = false;
 
 var getChatters = function()
 {
@@ -117,7 +91,6 @@ var getChatters = function()
 				{
 					roomUserList[chatrooms[j]] = null;
 					removeRoom(chatrooms[j]);
-					roomClosed = true;
 					j++;
 				}
 				//newGuids i is new! Add it!
@@ -139,7 +112,6 @@ var getChatters = function()
 			{
 				roomUserList[chatrooms[j]] = null;
 				removeRoom(chatrooms[j]);
-				roomClosed = true;
 				j++;
 			}
 			chatrooms = newGuids;
@@ -152,11 +124,8 @@ var getChatters = function()
 				newRoomUserList[room.guid] = room.Participants;
 			});
 
-
 			chatrooms.forEach(function(room)
 			{
-				if(!newRoomUserList[room])
-					return;
 				//check if chatroom exists in old list
 				//iff it doesn't exist, copy the old list over
 				if(roomUserList[room] == null)
@@ -170,6 +139,7 @@ var getChatters = function()
 					});
 					return;
 				}
+				alert('got here');
 				//compare the user lists and add/remove users as needed
 				//but ALWAYS add to newUserList so we can compare it to userList
 				i = 0;
@@ -186,6 +156,7 @@ var getChatters = function()
 					oldUser = oldUsers[j].name;
 					if(newUser == oldUser)
 					{
+						alert('1: new user ' + newUser + ' old user ' + oldUser);
 						newUserList.push(newUser);
 						i++;
 						j++;
@@ -193,14 +164,14 @@ var getChatters = function()
 					//oldUser no longer exists, remove it
 					else if(newUser > oldUser)
 					{
-						//alert('2: new user ' + newUser + ' old user ' + oldUser);
+						alert('2: new user ' + newUser + ' old user ' + oldUser);
 						removeUserFromCall(room, oldUser);
 						j++;
 					}
 					//newUser is new! Add it!
 					else if(newUser < oldUser)
 					{
-						//alert('3: new user ' + newUser + ' old user ' + oldUser);
+						alert('3: new user ' + newUser + ' old user ' + oldUser);
 						newUserList.push(newUser);
 						addUserToCall(room, newUser);
 						i++;
@@ -208,49 +179,21 @@ var getChatters = function()
 				}
 				
 				//make new rooms until we're done
-				while(i < newUsers.length)
+				while(i < newUsers[i].length)
 				{
-						//alert('4: new user ' + newUsers[i].name);
-					newUserList.push(newUsers[i].name);
+						alert('4: new user ' + newUsers[i].name);
+					newUserList.add(newUsers[i].name);
 					addUserToCall(room, newUsers[i].name); 
 					i++;
 				}
 				//remove old rooms until we're done
-				while(j < oldUsers.length)
+				while(j < oldUsers[j].length)
 				{
-					//alert('5: old user ' + oldUsers[j].name);
-					removeUserFromCall(room, oldUsers[j].name);
+						alert('5: old user ' + oldUsers[j].name);
+					removeUserFromCall(room, oldUsers[j]);
 					j++;
 				}
-				roomUserList[room] = newRoomUserList[room];
-
 			});//chatrooms.foreach(room)
-			//regenerate list of users who aren't in chats
-			//we have a list of users who ARE in chats, and we have to
-			//get the list of users in the game who are NOT in chats
-		
-		if(newUserList.length == 0 && !roomClosed)
-			return;
-
-			var notChatting = new Array();
-		//	alert(userList);
-			userList.forEach(function(user)
-			{
-				//user is playing but is NOT chatting
-				if(newUserList.indexOf(user) == -1)
-				{
-					notChatting.push(user);
-				}
-			});
-			notChatting.sort();
-			
-			$('#voice-widget-users').empty();
-
-			notChatting.forEach(function(user)
-			{
-				$('#voice-widget-users').addUser(user);
-			});
-			roomClosed = false;
 		});//getJSON()
 }//getChatters()
 
@@ -260,7 +203,7 @@ var removeRoom = function(guid)
 	numCall--;
 }
 
-window.setInterval(getChatters, 1000);
+window.setInterval(getChatters, 5000);
 
 //var host = "";
 var host = "http://ec2-174-129-55-249.compute-1.amazonaws.com";
@@ -294,7 +237,6 @@ function loadJSFile(filename)
 		{
 			$("#voice-widget-body").slideDown();
 			widgetShown = true;
-			/*
 			if(firstTime)
 			{
 				//remove these when you get the server reporting
@@ -302,7 +244,6 @@ function loadJSFile(filename)
 				//thisUser = 'Sean';
 				firstTime = false;
 			}
-			*/
 		}
 	}
 $(function()
@@ -323,6 +264,16 @@ $(document).ready(function() {
 	//load the HTML
 	$(document).loadHtml();
 
+	var token;
+	var getToken = function()
+	{
+		jQuery.getJSON('http://ec2-174-129-55-249.compute-1.amazonaws.com/token',
+			function(data)
+			{
+				Twilio.Device.setup(data.token);
+			});
+	}
+		getToken();
 		//initialize Twilio
 		Twilio.Device.ready(function(device)
 		{
@@ -415,7 +366,14 @@ $(document).ready(function() {
 
 	$('#talk-button').live('click', function()
 	{
-		makeCall();
+		jQuery.getJSON('http://ec2-174-129-55-249.compute-1.amazonaws.com/guid',
+			function(data)
+			{	
+				myCall = data.GUID;
+				$('#voice-widget-body').addCall(myCall);
+				Twilio.Device.connect({GUID:data.GUID, name:thisUser});
+				chatrooms.push(myCall);
+			});
 	});
 
 	$('#voice-widget-header').live('click', function()
@@ -430,7 +388,6 @@ $(document).ready(function() {
 		$('#button-container-' + myCall).append(getJoinButton(myCall));
 		removeUserFromCall(myCall, thisUser);
 		$('#voice-widget-users').addUser(thisUser);
-		$('#talk-button').slideDown();
 
 	});
 
@@ -473,10 +430,7 @@ $(document).ready(function() {
 				$(newUserDiv).insertAfter(lastDiv);
 				$('#voice-widget-users').reOrder();
 			}
-			if(userName == thisUser)
-			{
-				$('#un-' + userName).addClass('gs-hover');
-			}
+			userList.push(userName);
 		}
 	})(jQuery);
 			
@@ -484,7 +438,7 @@ $(document).ready(function() {
 
 		$.fn.removeUser = function(userName) {
 			var array = new Array();
-			//alert('remove user: ' + userName);
+
 			$(this).children().each(function()
 			{
 				if($(this).attr('id') == 'un-' + userName)
@@ -509,15 +463,15 @@ GameSpy.Voice.prototype.addUser = function(name)
 
 GameSpy.Voice.prototype.setThisUser = function(name)
 {
-	thisUser = name;
 	this.addUser(name);
+	thisUser = name;
 }
 	
 GameSpy.Voice.prototype.removeUser = function(name)
 {
 	//doesn't work if user is in a call...
   $('#voice-widget-users').removeUser(name);
-	//userList.remove(name);
+	userList.remove(name);
 	var i = userList.indexOf(name);
 	if( i != -1)
 	{
